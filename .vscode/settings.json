@@ -1,0 +1,7 @@
+{
+    "python.linting.pylintEnabled": false,
+    "python.analysis.extraPaths": [
+        "./",
+    ],
+    "python.languageServer": "Pylance",
+}
