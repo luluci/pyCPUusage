@@ -18,12 +18,14 @@ class ProcessProfiler:
 		self._cpu_userate_idle: int = 0
 		self._cpu_userate_busy: int = 0
 		self.proc_start: int = 0
+		self.proc_end: int = 0
 
 	def run(self):
 		# 計測時間決定
 		# とりあえずProcess起動周期の最大公倍数とする
 		timemax = math.lcm(*[proc.time.cycle for proc in self._procs])
-		timemax *= 10
+		timemax *= 2
+		self.proc_end = timemax
 		# us基準で計測時間分ループ
 		# 経過時間0から開始
 		for cpu_time in range(0,timemax):
@@ -70,34 +72,58 @@ class ProcessProfiler:
 		"""
 		RUNNING or READY 状態のプロセスから一番優先度の高いものを選択
 		"""
-		# 優先度の高い順にソートされている前提で、最初に条件にマッチしたものを選択
-		prior = None
-		for proc in self._procs:
-			if proc.is_running():
-				if prior is None:
-					# 優先度でソートしている、かつ、最初に検出した有効プロセスになるため、
-					# RUNNING中のプロセスが一番優先度が高い
-					# このときFCFSは働かないのでRUNNINGを継続
-					return proc
-
-			if proc.is_ready() or proc.is_running():
-				if prior is None:
-					# RUNNINGは直前でチェックしているため、
-					# ここでは必ずREADYが最初に見つかった状況になる
-					prior = proc
+		# READYから一番優先度の高いプロセスを取得
+		proc = None
+		# アクティブプロセスと比較
+		if self._active_proc is None:
+			# アクティブプロセスが無ければREADYからプロセス選択
+			proc = self._get_prior_ready_proc()
+		else:
+			# アクティブプロセスがあるとき
+			if self._active_proc.pri.enable_multi_intr:
+				# 多重割込み許可ならRAEDYプロセスと優先度比較
+				proc = self._get_prior_ready_proc()
+				if proc is None:
+					# READYプロセスが無ければアクティブプロセス継続
+					proc = self._active_proc
 				else:
-					if prior.pri.level > proc.pri.level:
+					if self._active_proc.pri.level >= proc.pri.level:
+						# 優先度同じならアクティブプロセスを優先
+						proc = self._active_proc
+					else:
+						# READYプロセスが優先度高ければ選択
+						pass
+			else:
+				# 多重割込み禁止ならアクティブプロセスから切り替え不可
+				proc = self._active_proc
+		# RUNNING or READY が見つからなかったらNone
+		return proc
+
+	def _get_prior_ready_proc(self) -> Process:
+		"""
+		RUNNING or READY 状態のプロセスから一番優先度の高いものを選択
+		"""
+		# READYから一番優先度の高いプロセスを取得
+		# 優先度の高い順にソートされている前提で、最初に条件にマッチしたものを選択
+		ready_proc = None
+		for proc in self._procs:
+			if proc.is_ready():
+				if ready_proc is None:
+					# 初回出現プロセスはそのまま候補とする
+					ready_proc = proc
+				else:
+					if ready_proc.pri.level > proc.pri.level:
 						# 優先度でソートされているため、優先度の低いプロセスが出現したら処理終了
-						return prior
-					elif prior.pri.level < proc.pri.level:
+						return ready_proc
+					elif ready_proc.pri.level < proc.pri.level:
 						# 優先度でソートされているため、優先度の高いプロセスは登場しない
 						raise Exception("logic error!")
 					else:
 						# 優先度が同じときFCFS方式でチェック
-						if prior.trace.time < proc.trace.time:
-							prior = proc
-		# RUNNING or READY が見つからなかったらNone
-		return prior
+						if ready_proc.trace.time < proc.trace.time:
+							ready_proc = proc
+		# READYが見つからなかったらNone
+		return ready_proc
 
 	def _go_time(self, cpu_time: int):
 		for proc in self._procs:

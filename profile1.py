@@ -6,6 +6,7 @@ from typing import List
 
 from process.process import Process, Priority, ProcessTime
 from process.process_profiler import ProcessProfiler
+from process import tracer
 
 pri = Priority
 time = ProcessTime
@@ -18,6 +19,8 @@ def profiler_test(procs: List[Process]):
 	profiler = ProcessProfiler(procs)
 	profiler.run()
 	print(f'CPU rate: {profiler.cpu_userate} %')
+	#
+	#tracer.make_graph(profiler)
 
 
 if False:
@@ -34,7 +37,7 @@ if False:
 	# 実行
 	profiler_test(procs)
 
-if True:
+if False:
 	"""
 	test2
 	"""
@@ -45,3 +48,16 @@ if True:
 	]
 	# 実行
 	profiler_test(procs)
+
+if True:
+	"""
+	test3
+	"""
+	# Process定義
+	procs = [
+		Process('Task1', pri(101, False), time(us(550), us(100))),
+		Process('Task2', pri(100, True), time(us(500), us(100))),
+	]
+	# 実行
+	profiler_test(procs)
+
