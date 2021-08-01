@@ -49,7 +49,7 @@ if False:
 	# 実行
 	profiler_test(procs)
 
-if True:
+if False:
 	"""
 	test3
 	"""
@@ -61,3 +61,14 @@ if True:
 	# 実行
 	profiler_test(procs)
 
+if True:
+	"""
+	test4
+	"""
+	# Process定義
+	procs = [
+		Process('Task1', pri(101, True), time(ms(10), us(800))),
+		Process('Task2', pri(100, True), time(us(500), us(400))),
+	]
+	# 実行
+	profiler_test(procs)

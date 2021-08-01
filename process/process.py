@@ -48,7 +48,11 @@ class TraceInfo:
 		self.cpu_time = cpu_time				# トレースログ生成時点のCPU時間
 		self.state = state						# プロセス状態
 		self.time = 0							# プロセス状態タイマ
+		# 占有率データ
 		self.cycle_delayed = False				# 処理つぶれ
+		self.cpu_usage = None					# 占有率
+		self.ready_time = None					# READY時間
+		self.run_time = None					# RUNNING時間
 
 class Process:
 
@@ -68,6 +72,9 @@ class Process:
 		self.trace: TraceInfo = None				# アクティブトレース情報
 		self._trace_log: List[TraceInfo] = []		# トレースログ
 		self._post_trans(0)
+		# 占有率データ
+		self._max_usage: TraceInfo = None			# 最大占有率への参照
+		self._usage_log: List[TraceInfo] = []		# トレースログ
 
 	def go(self, cpu_time: int, elapse: int):
 		"""
@@ -123,14 +130,30 @@ class Process:
 		self._run_time += elapse
 		#
 		if self._run_time >= self.time.proc:
-			# 処理時間リセット
-			self._ready_time
-			self._run_time = 0
 			# 処理時間更新
 			self.time.next_proc()
-			# 
+			# WAITING遷移
 			self.wait(cpu_time)
+			# 占有率情報作成
+			self._calc_usage(cpu_time)
+			# 処理時間リセット
+			self._ready_time = 0
+			self._run_time = 0
 
+	def _calc_usage(self, cpu_time: int):
+		log = TraceInfo(cpu_time, None)
+		log.ready_time = self._ready_time
+		log.run_time = self._run_time
+		log.cpu_usage = (self._run_time + self._ready_time) / self.time.cycle * 100
+		log.cycle_delayed = self._cycle_delayed
+		# ログ登録
+		self._usage_log.append(log)
+		#
+		if self._max_usage is None:
+			self._max_usage = log
+		else:
+			if log.cpu_usage > self._max_usage.cpu_usage:
+				self._max_usage = log
 
 	def dispatch(self, cpu_time: int):
 		"""

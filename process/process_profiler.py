@@ -24,7 +24,7 @@ class ProcessProfiler:
 		# 計測時間決定
 		# とりあえずProcess起動周期の最大公倍数とする
 		timemax = math.lcm(*[proc.time.cycle for proc in self._procs])
-		timemax *= 2
+		timemax *= 5
 		self.proc_end = timemax
 		# us基準で計測時間分ループ
 		# 経過時間0から開始
