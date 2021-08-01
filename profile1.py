@@ -21,6 +21,7 @@ def profiler_test(procs: List[Process]):
 	print(f'CPU rate: {profiler.cpu_userate} %')
 	#
 	#tracer.make_graph(profiler)
+	tracer.make_plantuml(profiler)
 
 
 if False:

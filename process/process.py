@@ -139,6 +139,7 @@ class Process:
 			# 処理時間リセット
 			self._ready_time = 0
 			self._run_time = 0
+			self._cycle_delayed = False
 
 	def _calc_usage(self, cpu_time: int):
 		log = TraceInfo(cpu_time, None)
