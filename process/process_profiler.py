@@ -3,7 +3,7 @@ import operator
 
 from typing import List
 
-from .process import Process
+from .process import Process, ProcessType
 
 
 class ProcessProfiler:
@@ -72,7 +72,6 @@ class ProcessProfiler:
 		"""
 		RUNNING or READY 状態のプロセスから一番優先度の高いものを選択
 		"""
-		# READYから一番優先度の高いプロセスを取得
 		proc = None
 		# アクティブプロセスと比較
 		if self._active_proc is None:
@@ -81,18 +80,28 @@ class ProcessProfiler:
 		else:
 			# アクティブプロセスがあるとき
 			if self._active_proc.pri.enable_multi_intr:
-				# 多重割込み許可ならRAEDYプロセスと優先度比較
+				# 多重割込み許可ならRAEDYプロセスとディスパッチ要否判定
 				proc = self._get_prior_ready_proc()
+				enable_dispatch = True
+				# READYプロセスが無ければディスパッチ不要
 				if proc is None:
-					# READYプロセスが無ければアクティブプロセス継続
-					proc = self._active_proc
+					enable_dispatch = False
+				# アクティブプロセスが割り込みのとき、タスクのディスパッチ不可
+				elif proc.type == ProcessType.TASK and self._active_proc.type == ProcessType.INTR:
+					enable_dispatch = False
+				# プロセス優先度がアクティブプロセス優先度より高くないとディスパッチ不可
+				elif self._active_proc.pri.level >= proc.pri.level:
+					enable_dispatch = False
 				else:
-					if self._active_proc.pri.level >= proc.pri.level:
-						# 優先度同じならアクティブプロセスを優先
-						proc = self._active_proc
-					else:
-						# READYプロセスが優先度高ければ選択
-						pass
+					#enable_dispatch = True
+					pass
+				# ディスパッチ
+				if enable_dispatch:
+					# ディスパッチ要ならREADYプロセス選択
+					pass
+				else:
+					# ディスパッチ不要ならアクティブプロセス選択
+					proc = self._active_proc
 			else:
 				# 多重割込み禁止ならアクティブプロセスから切り替え不可
 				proc = self._active_proc
@@ -101,7 +110,7 @@ class ProcessProfiler:
 
 	def _get_prior_ready_proc(self) -> Process:
 		"""
-		RUNNING or READY 状態のプロセスから一番優先度の高いものを選択
+		READY 状態のプロセスから一番優先度の高いものを選択
 		"""
 		# READYから一番優先度の高いプロセスを取得
 		# 優先度の高い順にソートされている前提で、最初に条件にマッチしたものを選択

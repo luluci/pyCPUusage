@@ -36,6 +36,10 @@ class ProcessTime:
 	def sec(time: int) -> int:
 		return time * 1000 * 1000
 
+class ProcessType(enum.Enum):
+	INTR = enum.auto()				# interrupt/割り込み
+	TASK = enum.auto()				# task/タスク
+
 class ProcessState(enum.Enum):
 	DORMANT = enum.auto()
 	WAITING = enum.auto()			# 時間経過待ち
@@ -56,8 +60,9 @@ class TraceInfo:
 
 class Process:
 
-	def __init__(self, id: str, pri: Priority, time: ProcessTime) -> None:
+	def __init__(self, type: ProcessType, id: str, pri: Priority, time: ProcessTime) -> None:
 		# プロセス情報
+		self.type = type
 		self.id = id
 		self.pri = pri
 		self.time = time
@@ -75,6 +80,14 @@ class Process:
 		# 占有率データ
 		self._max_usage: TraceInfo = None			# 最大占有率への参照
 		self._usage_log: List[TraceInfo] = []		# トレースログ
+
+	@classmethod
+	def task(cls, id: str, pri: Priority, time: ProcessTime):
+		return Process(ProcessType.TASK, id, pri, time)
+
+	@classmethod
+	def interrupt(cls, id: str, pri: Priority, time: ProcessTime):
+		return Process(ProcessType.INTR, id, pri, time)
 
 	def go(self, cpu_time: int, elapse: int):
 		"""

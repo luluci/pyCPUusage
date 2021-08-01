@@ -12,8 +12,8 @@ pri = Priority
 time = ProcessTime
 us = ProcessTime.usec
 ms = ProcessTime.msec
-
-
+TASK = Process.task
+INTR = Process.interrupt
 
 def profiler_test(procs: List[Process]):
 	profiler = ProcessProfiler(procs)
@@ -73,7 +73,7 @@ if False:
 	# 実行
 	profiler_test(procs)
 
-if True:
+if False:
 	"""
 	test5
 	"""
@@ -81,6 +81,18 @@ if True:
 	procs = [
 		Process('Task1', pri(101, True), time(us(1000), us(100))),
 		Process('Task2', pri(100, False), time(us(500), us(400))),
+	]
+	# 実行
+	profiler_test(procs)
+
+if True:
+	"""
+	test6
+	"""
+	# Process定義
+	procs = [
+		TASK('TASK1', pri(101, True), time(us(550), us(100))),
+		INTR('INTR1', pri(100, True), time(us(500), us(200))),
 	]
 	# 実行
 	profiler_test(procs)
