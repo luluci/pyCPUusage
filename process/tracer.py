@@ -5,7 +5,19 @@ from .process_profiler import ProcessProfiler
 from .process import Process, TraceInfo, ProcessState
 
 
-
+def make_log(profile: ProcessProfiler):
+	print('[all]')
+	buff = f'CPU rate: {profile.cpu_userate} %'
+	print(buff)
+	print('')
+	for i, proc in enumerate(profile._procs):
+		print(f'[{proc.id}]')
+		print(f'MAX CPU-rate  : {proc._max_usage.cpu_usage} %    (at {proc._max_usage.cpu_time} us)')
+		if proc._max_usage.cycle_delayed:
+			buff = 'あり'
+		else:
+			buff = 'なし'
+		print(f'割り込みつぶれ: {buff}')
 
 def make_plantuml(profile: ProcessProfiler):
 	"""
@@ -44,7 +56,7 @@ def make_plantuml(profile: ProcessProfiler):
 			puml_buff.append(buff)
 			# ハイライト設定
 			if log.cycle_delayed:
-				buff = f'highlight {log.cpu_time} to {log.cpu_time + proc.time.cycle} #Gold;line:DimGrey : 割り込みつぶれ'
+				buff = f'highlight {log.cpu_time} to {log.cpu_time + proc.time.cycle} #Gold;line:DimGrey : 割り込みつぶれ({proc.id})'
 				puml_highlight_buff.append(buff)
 		puml_buff.append('')
 

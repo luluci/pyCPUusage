@@ -18,9 +18,8 @@ ms = ProcessTime.msec
 def profiler_test(procs: List[Process]):
 	profiler = ProcessProfiler(procs)
 	profiler.run()
-	print(f'CPU rate: {profiler.cpu_userate} %')
+	tracer.make_log(profiler)
 	#
-	#tracer.make_graph(profiler)
 	tracer.make_plantuml(profiler)
 
 
@@ -62,7 +61,7 @@ if False:
 	# 実行
 	profiler_test(procs)
 
-if True:
+if False:
 	"""
 	test4
 	"""
@@ -70,6 +69,18 @@ if True:
 	procs = [
 		Process('Task1', pri(101, True), time(ms(10), us(800))),
 		Process('Task2', pri(100, True), time(us(500), us(400))),
+	]
+	# 実行
+	profiler_test(procs)
+
+if True:
+	"""
+	test5
+	"""
+	# Process定義
+	procs = [
+		Process('Task1', pri(101, True), time(us(1000), us(100))),
+		Process('Task2', pri(100, False), time(us(500), us(400))),
 	]
 	# 実行
 	profiler_test(procs)
