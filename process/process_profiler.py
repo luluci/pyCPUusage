@@ -137,7 +137,7 @@ class ProcessProfiler:
 	def _go_time(self, cpu_time: int):
 		for proc in self._procs:
 			# 時間を進める
-			proc.go(cpu_time, 1)
+			proc.go(cpu_time+1, 1)
 
 	def _check_cpu_userate(self, cpu_time: int):
 		"""
