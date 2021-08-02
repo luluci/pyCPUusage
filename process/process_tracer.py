@@ -6,7 +6,7 @@ from typing import List
 from .process import Process, ProcessType
 
 
-class ProcessProfiler:
+class ProcessTracer:
 	
 	def __init__(self, procs: List[Process]) -> None:
 		# Processリスト

@@ -1,5 +1,5 @@
 import enum
-from typing import List
+from typing import List, Callable
 
 class Priority:
 	def __init__(self, level:int, multiintr: bool) -> None:
@@ -48,7 +48,8 @@ class ProcessState(enum.Enum):
 
 class TraceInfo:
 
-	def __init__(self, cpu_time: int, state: ProcessState) -> None:
+	def __init__(self, id: str, cpu_time: int, state: ProcessState) -> None:
+		self.id = id
 		self.cpu_time = cpu_time				# トレースログ生成時点のCPU時間
 		self.state = state						# プロセス状態
 		self.time = 0							# プロセス状態タイマ
@@ -59,6 +60,11 @@ class TraceInfo:
 		self.run_time = None					# RUNNING時間
 
 class Process:
+	log_cb: Callable[[TraceInfo], None]
+
+	@classmethod
+	def set_log_callback(cls, logger: Callable[[TraceInfo], None]):
+		cls.log_cb = logger
 
 	def __init__(self, type: ProcessType, id: str, pri: Priority, time: ProcessTime) -> None:
 		# プロセス情報
@@ -75,11 +81,10 @@ class Process:
 		# トレース情報
 		# プロセスは必ずREADYを経由するので、READY遷移時にログ生成する
 		self.trace: TraceInfo = None				# アクティブトレース情報
-		self._trace_log: List[TraceInfo] = []		# トレースログ
 		self._post_trans(0)
 		# 占有率データ
 		self._max_usage: TraceInfo = None			# 最大占有率への参照
-		self._usage_log: List[TraceInfo] = []		# トレースログ
+		#self._usage_log: List[TraceInfo] = []		# トレースログ
 
 	@classmethod
 	def task(cls, id: str, pri: Priority, time: ProcessTime):
@@ -155,13 +160,13 @@ class Process:
 			self._cycle_delayed = False
 
 	def _calc_usage(self, cpu_time: int):
-		log = TraceInfo(cpu_time, None)
+		log = TraceInfo(self.id, cpu_time, None)
 		log.ready_time = self._ready_time
 		log.run_time = self._run_time
 		log.cpu_usage = (self._run_time + self._ready_time) / self.time.cycle * 100
 		log.cycle_delayed = self._cycle_delayed
 		# ログ登録
-		self._usage_log.append(log)
+		#self._usage_log.append(log)
 		#
 		if self._max_usage is None:
 			self._max_usage = log
@@ -224,10 +229,11 @@ class Process:
 		"""
 		状態遷移後共通処理
 		"""
+		if self.trace is not None:
+			# ログ登録
+			Process.log_cb(self.trace)
 		# トレース情報生成
-		self.trace = TraceInfo(cpu_time, self._state)
-		# ログ登録
-		self._trace_log.append(self.trace)
+		self.trace = TraceInfo(self.id, cpu_time, self._state)
 
 	def is_waiting(self):
 		return self._state == ProcessState.WAITING

@@ -5,8 +5,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), './'))
 from typing import List
 
 from process.process import Process, Priority, ProcessTime
-from process.process_profiler import ProcessProfiler
-from process import tracer
+from process.process_tracer import ProcessTracer
+from process.profiler import Profiler_plantuml
 
 pri = Priority
 time = ProcessTime
@@ -16,11 +16,14 @@ TASK = Process.task
 INTR = Process.interrupt
 
 def profiler_test(procs: List[Process]):
-	profiler = ProcessProfiler(procs)
-	profiler.run()
-	tracer.make_log(profiler)
+	profiler = Profiler_plantuml(procs)
+	Process.set_log_callback(profiler.logging)
+	tracer = ProcessTracer(procs)
+	tracer.run()
+	profiler.output()
+	#profiler.make_log(tracer)
 	#
-	tracer.make_plantuml(profiler)
+	#profiler.make_plantuml(tracer)
 
 
 if False:
@@ -92,7 +95,7 @@ if True:
 	# Process定義
 	procs = [
 		TASK('TASK1', pri(101, True), time(us(550), us(100))),
-		INTR('INTR1', pri(100, True), time(us(500), us(200))),
+		INTR('INTR1', pri(100, True), time(us(500), us(400))),
 	]
 	# 実行
 	profiler_test(procs)
